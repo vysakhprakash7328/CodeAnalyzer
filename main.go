@@ -347,14 +347,14 @@ func suggestRadonIssues(file string) {
 // Function to automatically format Python file according to PEP8
 func formatPEP8(file string) {
 	if _, err := exec.LookPath("autopep8"); err != nil {
-		fmt.Println("radon is not installed, installing...")
+		fmt.Println("pep8 is not installed, installing...")
 		
 		// Command to install radon
 		cmd := exec.Command("python", "-m", "pip", "install", "autopep8")
 		output, err := cmd.CombinedOutput()
 		
 		if err != nil {
-			fmt.Printf("Failed to install radon: %v\n", err)
+			fmt.Printf("Failed to install pep8: %v\n", err)
 			return
 		}
 		
