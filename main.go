@@ -18,20 +18,17 @@ var installScript string
 
 func installDependencies() error {
 	
-	// Write the Python script to a temporary file
 	tmpFile, err := os.CreateTemp("", "install_requirements_*.py")
 	if err != nil {
 		return fmt.Errorf("unable to create temporary file: %v", err)
 	}
-	defer os.Remove(tmpFile.Name()) // Clean up the temporary file after execution
+	defer os.Remove(tmpFile.Name())
 
-	// Write the embedded Python script into the temporary file
 	_, err = tmpFile.WriteString(installScript)
 	if err != nil {
 		return fmt.Errorf("unable to write to temporary file: %v", err)
 	}
 	
-	// Run the Python script to install required dependencies
 	cmd := exec.Command("python", tmpFile.Name())
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -55,9 +52,6 @@ func displayLogo() {
 
 func main() {
 
-	
-	
-	
 	var rootCmd = &cobra.Command{
 		Use: "codeanalyze",
 		Short: "Analyze the quality of your code",
@@ -65,7 +59,6 @@ func main() {
 		
 	}
 
-	
 	var analyzeCmd = &cobra.Command{
 		Use: "analyze",
 		Short: "Analyze the specified code file",
@@ -93,14 +86,8 @@ func main() {
 	analyzeCmd.Flags().Bool("watch", false, "Continuously monitor the file for changes")
 	analyzeCmd.Flags().Bool("format", false, "format the code using autopep8")
 
-
 	rootCmd.AddCommand(analyzeCmd)
 
-	
-	
-	
-
-	// Continue with your CLI functionality
 	fmt.Println("Dependencies installed successfully.")
 
 	if err := rootCmd.Execute(); err != nil {
@@ -111,12 +98,8 @@ func main() {
 }
 
 func analyzeFile(file string, metrics bool, suggestions bool, format bool) {
-	// Analyze the code file and provide suggestions for improvements
 	fmt.Printf("Analyzing file: %s\n", file)
-
 	ext := filepath.Ext(file)
-
-	
 
 	if metrics {
 		if ext == ".py" {
@@ -140,7 +123,10 @@ func analyzeFile(file string, metrics bool, suggestions bool, format bool) {
 
 	if format {
 		if ext == ".py" {
+			formatAutoflake(file)
+			formatIsort(file)
 			formatPEP8(file)
+			formatBlack(file)
 		}
 	}
 }
@@ -184,7 +170,6 @@ func watchFile(file string, metrics bool, suggestions bool) {
 		}
 	}()
 
-	// Keep the program running until interrupted
 	<-done
 }
 
@@ -192,7 +177,6 @@ func watchFile(file string, metrics bool, suggestions bool) {
 
 
 func analyzePythonFile(file string) (int, int, int) {
-	// Open the file
 	f, err := os.Open(file)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
@@ -212,18 +196,15 @@ func analyzePythonFile(file string) (int, int, int) {
 		line := scanner.Text()
 		lines++
 
-		// Check if it's a function definition
 		if functionPattern.MatchString(line) {
 			functions++
 		}
 
-		// Check if it's a variable assignment
 		if variablePattern.MatchString(line) {
 			variables++
 		}
 	}
 
-	// Handle scanning errors
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading file:", err)
 	}
@@ -237,18 +218,16 @@ func suggestSyntax(file string) {
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println("Fix the following syntax errors:")
-		fmt.Println(string(output)) // Print the exact error lines
+		fmt.Println(string(output))
 	} else {
 		fmt.Println("No syntax issues detected.")
 	}
 }
 
-// Suggest improvements based on Flake8 results
 func suggestFlake8Issues(file string) {
 	if _, err := exec.LookPath("flake8"); err != nil {
 		fmt.Println("radon is not installed, installing...")
 		
-		// Command to install radon
 		cmd := exec.Command("python", "-m", "pip", "install", "flake8")
 		output, err := cmd.CombinedOutput()
 		
@@ -266,22 +245,18 @@ func suggestFlake8Issues(file string) {
 	output, err := cmd.CombinedOutput()
 	fmt.Print(err)
 	if err != nil {
-		// Provide specific suggestions based on the error
 		fmt.Println("Style issues detected:")
-		fmt.Println(string(output)) // You can parse this output to give more tailored suggestions
-		// Example:
-		// "Refactor long lines to be within 79 characters."
+		fmt.Println(string(output)) 
+
 	} else {
 		fmt.Println("No style issues detected by Flake8.")
 	}
 }
 
-// Suggest improvements based on Radon complexity
 func suggestRadonIssues(file string) {
 	if _, err := exec.LookPath("radon"); err != nil {
 		fmt.Println("radon is not installed, installing...")
 		
-		// Command to install radon
 		cmd := exec.Command("python", "-m", "pip", "install", "radon")
 		output, err := cmd.CombinedOutput()
 		
@@ -304,14 +279,12 @@ func suggestRadonIssues(file string) {
         return
     }
 
-    // Display the raw output
     fmt.Println("Raw complexity analysis result:")
     fmt.Println(string(output))
 
-    // Parse the output and provide suggestions
     fmt.Println("\nDetailed complexity suggestions:")
     scanner := bufio.NewScanner(strings.NewReader(string(output)))
-    complexityPattern := regexp.MustCompile(`\s+(\w+)\s+-\s+(\w)`) // Match function name and grade
+    complexityPattern := regexp.MustCompile(`\s+(\w+)\s+-\s+(\w)`)
 
     for scanner.Scan() {
         line := scanner.Text()
@@ -320,7 +293,6 @@ func suggestRadonIssues(file string) {
             grade := match[2]
             fmt.Printf("Function: %s, Complexity Grade: %s\n", functionName, grade)
 
-            // Provide suggestions based on the grade
             switch grade {
             case "A":
                 fmt.Println(" - No action needed. Code is simple and clean.")
@@ -344,12 +316,10 @@ func suggestRadonIssues(file string) {
 }
 
 
-// Function to automatically format Python file according to PEP8
 func formatPEP8(file string) {
 	if _, err := exec.LookPath("autopep8"); err != nil {
 		fmt.Println("pep8 is not installed, installing...")
 		
-		// Command to install radon
 		cmd := exec.Command("python", "-m", "pip", "install", "autopep8")
 		output, err := cmd.CombinedOutput()
 		
@@ -366,7 +336,6 @@ func formatPEP8(file string) {
 
 	fmt.Println("Formatting Python code according to PEP8...")
 
-	// Run autopep8 to format the code
 	cmd := exec.Command("autopep8", "--in-place", file)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -374,5 +343,93 @@ func formatPEP8(file string) {
 		fmt.Println(string(output))
 	} else {
 		fmt.Println("Code formatted successfully according to PEP8.")
+	}
+}
+func formatBlack(file string) {
+	if _, err := exec.LookPath("black"); err != nil {
+		fmt.Println("black is not installed, installing...")
+		
+		cmd := exec.Command("python", "-m", "pip", "install", "black")
+		output, err := cmd.CombinedOutput()
+		
+		if err != nil {
+			fmt.Printf("Failed to install black: %v\n", err)
+			return
+		}
+		
+		fmt.Println("black installed successfully!")
+		fmt.Printf("Command output:\n%s\n", output)
+	} else {
+		fmt.Println("black is already installed.")
+	}
+
+	fmt.Println("Formatting Python code according to black...")
+
+	cmd := exec.Command("black", file)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error formatting the code with black:")
+		fmt.Println(string(output))
+	} else {
+		fmt.Println("Code formatted successfully according to black.")
+	}
+}
+func formatAutoflake(file string) {
+	if _, err := exec.LookPath("autoflake"); err != nil {
+		fmt.Println("autoflake is not installed, installing...")
+		
+		cmd := exec.Command("python", "-m", "pip", "install", "autoflake")
+		output, err := cmd.CombinedOutput()
+		
+		if err != nil {
+			fmt.Printf("Failed to install autoflake: %v\n", err)
+			return
+		}
+		
+		fmt.Println("autoflake installed successfully!")
+		fmt.Printf("Command output:\n%s\n", output)
+	} else {
+		fmt.Println("autoflake is already installed.")
+	}
+
+	fmt.Println("Formatting Python code according to autoflake...")
+
+	cmd := exec.Command("autoflake", "--in-place", "--remove-unused-variables", "--remove-all-unused-imports", file)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error formatting the code with autoflake:")
+		fmt.Println(string(output))
+	} else {
+		fmt.Println("Code formatted successfully according to autoflake.")
+	}
+}
+
+func formatIsort(file string) {
+	if _, err := exec.LookPath("isort"); err != nil {
+		fmt.Println("isort is not installed, installing...")
+		
+		cmd := exec.Command("python", "-m", "pip", "install", "isort")
+		output, err := cmd.CombinedOutput()
+		
+		if err != nil {
+			fmt.Printf("Failed to install isort: %v\n", err)
+			return
+		}
+		
+		fmt.Println("isort installed successfully!")
+		fmt.Printf("Command output:\n%s\n", output)
+	} else {
+		fmt.Println("isort is already installed.")
+	}
+
+	fmt.Println("Formatting Python code according to isort...")
+
+	cmd := exec.Command("isort", file)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error formatting the code with isort:")
+		fmt.Println(string(output))
+	} else {
+		fmt.Println("Code formatted successfully according to isort.")
 	}
 }
